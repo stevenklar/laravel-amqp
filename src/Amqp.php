@@ -21,16 +21,7 @@ class Amqp
     {
         $properties['routing'] = $routing;
 
-        /* @var Publisher $publisher */
-        $publisher = app()->make('Bschmitt\Amqp\Publisher');
-        $publisher
-            ->mergeProperties($properties)
-            ->setup();
-
-        if (is_string($message)) {
-            $message = new Message($message, ['content_type' => 'text/plain', 'delivery_mode' => 2]);
-        }
-
+        $publisher = $this->getPublisher();
         $publisher->publish($routing, $message);
         Request::shutdown($publisher->getChannel(), $publisher->getConnection());
     }
@@ -45,17 +36,39 @@ class Amqp
     {
         $properties['queue'] = $queue;
 
+        $consumer = $this->getConsumer();
+        $consumer->consume($queue, $callback);
+        Request::shutdown($consumer->getChannel(), $consumer->getConnection());
+    }
+
+    /**
+     * @param array $properties
+     * @return Consumer
+     */
+    public function getConsumer()
+    {
         /* @var Consumer $consumer */
         $consumer = app()->make('Bschmitt\Amqp\Consumer');
         $consumer
             ->mergeProperties($properties)
             ->setup();
 
-        $consumer->consume($queue, $callback);
-        Request::shutdown($consumer->getChannel(), $consumer->getConnection());
+        return $consumer;
     }
 
     /**
+     * @param array $properties
+     * @return Publisher
+     */
+    public function getPublisher()
+    {
+        $publisher = app()->make('Bschmitt\Amqp\Publisher');
+        $publisher
+            ->mergeProperties($properties)
+            ->setup();
+
+        return $publisher;
+    }
      * @param string $body
      * @param array  $properties
      * @return \Bschmitt\Amqp\Message
