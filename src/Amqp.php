@@ -69,9 +69,12 @@ class Amqp
 
         return $publisher;
     }
+
+    /**
      * @param string $body
      * @param array  $properties
-     * @return \Bschmitt\Amqp\Message
+     * @return Message
+     * @deprecated 3.0.0 Replace with own message object creation
      */
     public function message($body, $properties = [])
     {
